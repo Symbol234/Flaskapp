@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Library Seating</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .section-title { margin-top: 30px; font-size: 1.2em; font-weight: bold; }
+        .grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+        .seat {
+            padding: 15px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #e0ffe0;
+            cursor: pointer;
+        }
+        .reserved {
+            background-color: #ffd6d6;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Library Seating Arrangement</h2>
+
+<div class="section-title">Named Seats (A–U)</div>
+<div class="grid">
+    {% for seat, name in seats.items() if seat.isalpha() %}
+    <div class="seat {% if name %}reserved{% endif %}" onclick="handleSeatClick('{{ seat }}', '{{ name }}')">
+        <strong>{{ seat }}</strong><br>
+        {{ name if name else 'Available' }}
+    </div>
+    {% endfor %}
+</div>
+
+<div class="section-title">Numbered Seats (1–43)</div>
+<div class="grid">
+    {% for seat, name in seats.items() if seat.isdigit() %}
+    <div class="seat {% if name %}reserved{% endif %}" onclick="handleSeatClick('{{ seat }}', '{{ name }}')">
+        <strong>{{ seat }}</strong><br>
+        {{ name if name else 'Available' }}
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+function handleSeatClick(seatId, currentName) {
+    if (!currentName || currentName === "None") {
+        const userName = prompt("Enter your name to reserve Seat " + seatId);
+        if (userName) {
+            fetch('/reserve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `seat_id=${seatId}&name=${userName}`
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                location.reload();
+            });
+        }
+    } else {
+        const confirmReset = confirm(`Reset Seat ${seatId} (currently reserved by ${currentName})?`);
+        if (confirmReset) {
+            fetch('/reset', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `seat_id=${seatId}`
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                location.reload();
+            });
+        }
+    }
+}
+</script>
+
+</body>
+</html>
